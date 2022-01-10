@@ -1,0 +1,53 @@
+image: amazon/aws-sam-cli-build-image-nodejs14.x
+
+cache:
+  paths:
+    - node_modules/
+
+stages:
+  - build
+  - deploy
+
+.build:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+  only:
+    - main
+
+build_staging:
+  extends: .build
+  environment:
+    name: staging
+
+build_production:
+  extends: .build
+  when: manual
+  environment:
+    name: production
+
+.deploy:
+  stage: deploy
+  script:
+    - npm run deploy
+  only:
+    - main
+
+deploy_staging:
+  extends: .deploy
+  dependencies:
+    - build_staging
+  environment:
+    name: staging
+
+deploy_production:
+  extends: .deploy
+  dependencies:
+    - build_production
+  when: manual
+  environment:
+    name: production
